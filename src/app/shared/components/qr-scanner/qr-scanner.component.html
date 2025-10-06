@@ -7,6 +7,11 @@
   <div class="scanner-body">
     <div class="alert alert-error" *ngIf="scanError">
       {{ scanError }}
+      <div class="scanner-error-actions">
+        <button class="btn btn-primary" (click)="startScanner()">Retry Camera</button>
+        <button class="btn btn-secondary" (click)="openInExternalBrowser()">Open in Browser</button>
+        <button class="btn btn-secondary" (click)="copyPageLink()">Copy Link</button>
+      </div>
     </div>
 
     <div class="scanner-instructions">
@@ -51,6 +56,9 @@
             (click)="toggleManualEntry()">
             ← Back to Scanner
           </button>
+        </div>
+        <div class="external-help" *ngIf="scanError">
+          <p>If your browser blocks the camera, try opening this page in the system browser (Safari/Chrome) or paste the copied link into a new tab.</p>
         </div>
       </div>
     </div>

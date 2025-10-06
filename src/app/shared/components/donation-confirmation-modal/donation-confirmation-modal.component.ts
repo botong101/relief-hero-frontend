@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -47,6 +47,7 @@ export class DonationConfirmationModalComponent {
   private router = inject(Router);
   private authService = inject(AuthService);
   private iconService = inject(IconService);
+  private cdr = inject(ChangeDetectorRef);
 
   rating = 0;
   comment = '';
@@ -61,8 +62,20 @@ export class DonationConfirmationModalComponent {
   };
 
   ngOnInit() {
+    this.applyDonationDefaults();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Re-apply defaults when donationData arrives or when modal is shown
+    if ((changes['donationData'] && this.donationData) || (changes['show'] && this.show)) {
+      this.applyDonationDefaults();
+      // With OnPush, ensure the view is marked
+      this.cdr.markForCheck();
+    }
+  }
+
+  private applyDonationDefaults(): void {
     if (this.donationData?.supply_needs_fulfilled) {
-      // Pre-fill with expected supplies
       const supplies = this.donationData.supply_needs_fulfilled;
       this.suppliesConfirmed = {
         water_received: supplies.water || 0,

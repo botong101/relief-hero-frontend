@@ -15,6 +15,7 @@ import { DonationService } from '../../core/services/donation.service';
 import { LocationTrackingService, TrackingStatus } from '../../services/location-tracking.service';
 import { IconService } from '../../services/icon.service';
 import { SafeHtmlPipe } from '../../pipes/safe-html.pipe';
+import { environment } from '../../../environments/environment';
 
 // Anonymous Location Interface
 interface AnonymousLocation {
@@ -237,16 +238,19 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     
     console.log('Location sharing status:', this.isLocationSharing, 'sessionId:', sessionId, 'locationId:', locationId);
     
-    // Store current session ID and initialize WebSocket if affected user
-    if (sessionId && this.isAffectedUser) {
+    // Store current session ID and initialize WebSocket for the session owner (anonymous or logged-in)
+    // Anonymous affected users share a session_id in localStorage when they create a location.
+    // Previously we only initialized the WebSocket for authenticated users with role 'affected'.
+    // That prevented anonymous affected users from receiving qr_scan_notification messages.
+    if (sessionId) {
       this.currentSessionId = sessionId;
       this.initializeWebSocket();
-      
-      // Request notification permission for donation alerts
-      if (Notification.permission === 'default') {
+
+      // Request notification permission for donation alerts (best-effort)
+      if (Notification && Notification.permission === 'default') {
         Notification.requestPermission().then(permission => {
           console.log('Notification permission:', permission);
-        });
+        }).catch(err => console.warn('Notification permission request failed', err));
       }
     }
     
@@ -1241,10 +1245,16 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   private initializeWebSocket(): void {
     if (!this.currentSessionId) return;
 
-    // Use environment websocket URL
-    const wsUrl = `ws://localhost:8000/ws/locations/`;
+  // Use environment websocket URL if available (supports wss in production)
+  // environment.wsUrl is like 'wss://relief-hero.onrender.com/ws'
+  const baseWs = environment?.wsUrl || ((typeof (window) !== 'undefined') ? ((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws') : 'ws://localhost:8000/ws');
+  const wsUrl = `${baseWs.replace(/\/$/, '')}/locations/`;
     
     try {
+      if (this.webSocket && this.webSocket.readyState === WebSocket.OPEN) {
+        console.log('WebSocket already open');
+        return;
+      }
       this.webSocket = new WebSocket(wsUrl);
       
       this.webSocket.onopen = () => {
@@ -1252,8 +1262,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       };
       
       this.webSocket.onmessage = (event) => {
+        console.log('Raw WebSocket message:', event.data);
         const data = JSON.parse(event.data);
-        console.log('WebSocket message received:', data);
+        console.log('Parsed WebSocket message:', data);
         
         if (data.type === 'qr_scan_notification') {
           this.handleQRScanNotification(data.data);

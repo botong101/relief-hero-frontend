@@ -77,6 +77,19 @@
   margin-bottom: 20px;
 }
 
+/* Ensure video uses full area and doesn't force native controls on iOS */
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover;
+}
+
+.external-help {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
 .manual-entry-section {
   margin-top: 20px;
   text-align: center;
@@ -170,4 +183,15 @@
   background-color: #fee2e2;
   border: 2px solid #ef4444;
   color: #991b1b;
+}
+
+.scanner-error-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.scanner-error-actions .btn {
+  padding: 8px 12px;
+  font-size: 0.9rem;
 }
