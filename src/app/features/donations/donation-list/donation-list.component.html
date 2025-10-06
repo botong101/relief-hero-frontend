@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Donation History</h1>
+    <p class="subtitle">QR-based donations made to affected users</p>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert alert-error" *ngIf="error">
+    {{ error }}
+  </div>
+
+  <!-- Loading -->
+  <div class="spinner" *ngIf="loading"></div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && donations.length === 0" class="empty-state card">
+    <h3>No donations yet</h3>
+    <p>Donation records will appear here when donators scan QR codes.</p>
+  </div>
+
+  <!-- Donations List -->
+  <div *ngIf="!loading && donations.length > 0" class="donations-list">
+    <div *ngFor="let donation of donations; trackBy: trackByDonationId" 
+         class="donation-card card"
+         [class.my-donation]="isMyDonation(donation)">
+      
+      <div class="donation-header">
+        <div class="donator-info">
+          <h3>{{ donation.donator_name }}</h3>
+          <span class="donator-email">{{ donation.donator_email }}</span>
+          <span *ngIf="isMyDonation(donation)" class="my-badge">Your Donation</span>
+        </div>
+        <div class="donation-date">
+          {{ formatDate(donation.donated_at) }}
+        </div>
+      </div>
+
+      <div class="donation-body">
+        <div class="affected-user-section">
+          <h4>👤 Affected User</h4>
+          <div class="affected-details">
+            <p><strong>Name:</strong> {{ donation.affected_first_name }} {{ donation.affected_last_name }}</p>
+            <p><strong>Phone:</strong> {{ donation.affected_phone }}</p>
+          </div>
+        </div>
+
+        <div class="supply-needs-section">
+          <h4>📦 Supplies Provided</h4>
+          <p class="supply-summary">{{ getSupplyNeedsSummary(donation.supply_needs_fulfilled) }}</p>
+        </div>
+
+        <div class="location-section">
+          <h4>📍 Location</h4>
+          <p class="coordinates">Lat: {{ donation.latitude }}, Lng: {{ donation.longitude }}</p>
+        </div>
+
+        <div class="qr-section">
+          <span class="qr-code-badge">QR: {{ donation.qr_code }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

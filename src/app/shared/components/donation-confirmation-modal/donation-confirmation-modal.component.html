@@ -1,0 +1,149 @@
+<div *ngIf="show" class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <span [innerHTML]="getIcon('celebration', 'md') | safeHtml"></span>
+        Donation Received!
+      </h2>
+      <button class="close-btn" (click)="onClose()">&times;</button>
+    </div>
+
+    <div class="modal-content">
+      <div class="donation-info">
+        <div class="donator-info">
+          <h3>{{ donationData?.donator_name }}</h3>
+          <p class="donator-email">{{ donationData?.donator_email }}</p>
+          <p class="donation-time">Donated {{ donationData?.donated_at | date:'short' }}</p>
+        </div>
+
+        <div class="success-message">
+          <p>
+            <strong>Great news!</strong> A generous donator has scanned your QR code and 
+            provided relief supplies. Please confirm what you received and rate your experience.
+          </p>
+        </div>
+      </div>
+
+      <div class="supplies-section">
+        <h4>📦 Supply Confirmation</h4>
+        <p class="section-subtitle">Please confirm the supplies you received:</p>
+        
+        <div class="auto-fill-section">
+          <button type="button" class="btn btn-auto-fill" (click)="fillExpectedSupplies()">
+            ✓ Received Expected Supply
+          </button>
+          <span class="auto-fill-hint">Click to automatically fill with expected amounts</span>
+        </div>
+
+        <div class="supply-items">
+          <div class="supply-item">
+            <label>💧 Water Supplies:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('water') > 0">Expected: {{ getSupplyExpected('water') }}</span>
+              <input type="number" 
+                     [(ngModel)]="suppliesConfirmed.water_received" 
+                     min="0" 
+                     placeholder="0"
+                     class="supply-count">
+              <span class="received-label">bottles/liters received</span>
+            </div>
+          </div>
+
+          <div class="supply-item">
+            <label>🍞 Food Packages:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('food') > 0">Expected: {{ getSupplyExpected('food') }}</span>
+              <input type="number" 
+                     [(ngModel)]="suppliesConfirmed.food_received" 
+                     min="0" 
+                     placeholder="0"
+                     class="supply-count">
+              <span class="received-label">packages received</span>
+            </div>
+          </div>
+
+          <div class="supply-item">
+            <label>🏥 Medical Supplies:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('medical_supplies') > 0">Expected: {{ getSupplyExpected('medical_supplies') }}</span>
+              <input type="number" 
+                     [(ngModel)]="suppliesConfirmed.medical_supplies_received" 
+                     min="0" 
+                     placeholder="0"
+                     class="supply-count">
+              <span class="received-label">items received</span>
+            </div>
+          </div>
+
+          <div class="supply-item">
+            <label>👕 Clothing Items:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('clothing') > 0">Expected: {{ getSupplyExpected('clothing') }}</span>
+              <input type="number" 
+                     [(ngModel)]="suppliesConfirmed.clothing_received" 
+                     min="0" 
+                     placeholder="0"
+                     class="supply-count">
+              <span class="received-label">pieces received</span>
+            </div>
+          </div>
+
+          <div class="supply-item">
+            <label>🏠 Shelter Materials:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('shelter_materials') > 0">Expected: {{ getSupplyExpected('shelter_materials') }}</span>
+              <input type="number" 
+                     [(ngModel)]="suppliesConfirmed.shelter_materials_received" 
+                     min="0" 
+                     placeholder="0"
+                     class="supply-count">
+              <span class="received-label">items received</span>
+            </div>
+          </div>
+
+          <div class="supply-item">
+            <label>📋 Other Items:</label>
+            <div class="supply-input">
+              <span class="expected" *ngIf="getSupplyExpected('other')">Expected: {{ getSupplyExpected('other') }}</span>
+              <textarea [(ngModel)]="suppliesConfirmed.other_items" 
+                        placeholder="Describe other items received (cash, etc.)..."
+                        class="other-items-input"
+                        rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="all-received-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="suppliesConfirmed.all_supplies_received">
+            <span class="checkmark"></span>
+            I confirm that I received all the supplies as promised
+          </label>
+        </div>
+      </div>
+
+      <div class="rating-section">
+        <h4><span [innerHTML]="getIcon('star') | safeHtml"></span> Rate Your Experience</h4>
+        <p class="section-subtitle">How satisfied are you with this donation?</p>
+        
+        <div class="star-rating">
+          <span *ngFor="let star of [1,2,3,4,5]" 
+                [class]="getStarClass(star)"
+                (click)="setRating(star)">
+            ★
+          </span>
+        </div>
+
+        <textarea [(ngModel)]="comment" 
+                  placeholder="Share your feedback (optional)..."
+                  class="comment-input"
+                  rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Cancel</button>
+      <button class="btn btn-primary" (click)="onSubmit()">Submit Rating</button>
+    </div>
+  </div>
+</div>

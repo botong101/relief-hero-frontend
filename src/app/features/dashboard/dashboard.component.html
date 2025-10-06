@@ -1,0 +1,68 @@
+<div class="container">
+  <div class="dashboard-header">
+    <h1>Welcome, {{ currentUser?.first_name }}!</h1>
+    <p class="role-badge badge" [class.badge-donator]="isDonator" [class.badge-affected]="isAffected">
+      {{ currentUser?.role }}
+    </p>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h2>Quick Actions</h2>
+    </div>
+    <div class="quick-actions">
+      <a *ngIf="isDonator" routerLink="/donations/create" class="btn btn-primary">
+        🎁 Create New Donation
+      </a>
+      <a routerLink="/donations" class="btn btn-secondary">
+        <span [innerHTML]="getIcon('clipboard') | safeHtml"></span> View All Donations
+      </a>
+      <a routerLink="/map" class="btn btn-success">
+        <span [innerHTML]="getIcon('location-marker') | safeHtml"></span> View Map
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Donations -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h2>Recent Donations</h2>
+    </div>
+
+    <div class="spinner" *ngIf="loading"></div>
+
+    <div *ngIf="!loading && recentDonations.length === 0" class="empty-state">
+      <p>No donations yet.</p>
+      <a *ngIf="isDonator" routerLink="/donations/create" class="btn btn-primary">
+        Create Your First Donation
+      </a>
+    </div>
+
+    <div *ngIf="!loading && recentDonations.length > 0" class="donations-list">
+      <div *ngFor="let donation of recentDonations" class="donation-item">
+        <div class="donation-info">
+          <h3>{{ donation.title }}</h3>
+          <p class="donation-meta">
+            {{ donation.category }} • {{ donation.quantity }} {{ donation.unit }}
+          </p>
+          <p class="donation-date">
+            {{ donation.created_at | date:'short' }}
+          </p>
+        </div>
+        <div class="donation-actions">
+          <span [class]="getStatusBadgeClass(donation.status)">
+            {{ donation.status }}
+          </span>
+          <a [routerLink]="['/donations', donation.id]" class="btn btn-secondary btn-sm">
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && recentDonations.length > 0" class="card-footer">
+      <a routerLink="/donations" class="view-all-link">View all donations →</a>
+    </div>
+  </div>
+</div>

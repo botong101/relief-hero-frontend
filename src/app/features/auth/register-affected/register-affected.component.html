@@ -1,0 +1,354 @@
+<div class="container">
+  <div class="auth-container">
+    <div class="card">
+      <div class="card-header">
+        <h2><span [innerHTML]="getIcon('emergency') | safeHtml"></span> Share Your Location - Get Help</h2>
+        <p class="subtitle">Fill out this form to share your location and connect with donators</p>
+      </div>
+
+      <div class="alert alert-info">
+        <strong><span [innerHTML]="getIcon('location-marker') | safeHtml"></span> Quick Registration!</strong> Complete the steps below to share your location and get assistance.
+      </div>
+
+      <div class="alert alert-error" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <!-- Restriction Message -->
+      <div class="alert alert-warning restriction-alert" *ngIf="isRestricted && restrictionData">
+        <h4><span [innerHTML]="getIcon('clock') | safeHtml"></span> Restriction Active</h4>
+        <p><strong>{{ restrictionData.message }}</strong></p>
+        <div class="countdown-timer">
+          <div class="timer-label">Time Remaining:</div>
+          <div class="timer-value">{{ timeRemaining }}</div>
+        </div>
+        <div class="restriction-info">
+          <p>You received a donation recently. To ensure fair distribution of resources, you can request help again after the restriction period ends.</p>
+          <p><strong>Next Request Allowed:</strong> {{ restrictionData.next_allowed_at | date:'medium' }}</p>
+        </div>
+        <button type="button" class="btn btn-secondary" routerLink="/map">
+          ← Back to Map
+        </button>
+      </div>
+
+      <!-- Step Indicator -->
+      <div class="step-indicator">
+        <div class="step" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+          <span class="step-number">1</span>
+          <span class="step-label">Contact Info</span>
+        </div>
+        <div class="step" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
+          <span class="step-number">2</span>
+          <span class="step-label">Verify Photo</span>
+        </div>
+        <div class="step" [class.active]="currentStep === 3" [class.completed]="currentStep > 3">
+          <span class="step-number">3</span>
+          <span class="step-label">Supply Needs</span>
+        </div>
+        <div class="step" [class.active]="currentStep === 4">
+          <span class="step-number">4</span>
+          <span class="step-label">Your QR Code</span>
+        </div>
+      </div>
+
+      <form [formGroup]="shareLocationForm" (ngSubmit)="onSubmit()" *ngIf="!isRestricted">
+        <!-- Step 1: Contact Information -->
+        <div class="form-section" *ngIf="currentStep === 1">
+          <p class="help-text">
+            <span [innerHTML]="getIcon('phone') | safeHtml"></span> Share your contact information so donators can reach you
+          </p>
+
+          <div class="form-group">
+            <label for="first_name">
+              First Name <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="first_name"
+              formControlName="first_name"
+              placeholder="Juan"
+              class="form-control"
+              [class.error]="shareLocationForm.get('first_name')?.invalid && shareLocationForm.get('first_name')?.touched"
+            />
+            <div class="error-message" *ngIf="shareLocationForm.get('first_name')?.invalid && shareLocationForm.get('first_name')?.touched">
+              First name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="last_name">
+              Last Name <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="last_name"
+              formControlName="last_name"
+              placeholder="Dela Cruz"
+              class="form-control"
+              [class.error]="shareLocationForm.get('last_name')?.invalid && shareLocationForm.get('last_name')?.touched"
+            />
+            <div class="error-message" *ngIf="shareLocationForm.get('last_name')?.invalid && shareLocationForm.get('last_name')?.touched">
+              Last name is required
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">
+              Phone Number <span class="required">*</span>
+              <small>(e.g., 09123456789 or +639123456789)</small>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              formControlName="phone"
+              placeholder="09123456789"
+              class="form-control"
+              [class.error]="shareLocationForm.get('phone')?.invalid && shareLocationForm.get('phone')?.touched"
+            />
+            <div class="error-message" *ngIf="shareLocationForm.get('phone')?.invalid && shareLocationForm.get('phone')?.touched">
+              Please enter a valid PH mobile number
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="facebook">
+              Facebook Profile
+              <small>(optional)</small>
+            </label>
+            <input
+              type="text"
+              id="facebook"
+              formControlName="facebook"
+              placeholder="facebook.com/yourprofile"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">
+              Email Address
+              <small>(optional)</small>
+            </label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              placeholder="your@email.com"
+              class="form-control"
+              [class.error]="shareLocationForm.get('email')?.invalid && shareLocationForm.get('email')?.touched"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="notes">
+              Additional Notes
+              <small>(optional - describe your situation)</small>
+            </label>
+            <textarea
+              id="notes"
+              formControlName="notes"
+              placeholder="Any important information donators should know..."
+              class="form-control"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Step 2: Photo Verification -->
+        <div class="form-section" *ngIf="currentStep === 2">
+          <p class="help-text">
+            📸 Take a photo to verify your location (required for safety)
+          </p>
+          
+          <div class="photo-upload-section">
+            <div class="photo-preview" *ngIf="photoPreview">
+              <img [src]="photoPreview" alt="Location photo" />
+              <button type="button" class="btn btn-secondary" (click)="removePhoto()">
+                <span [innerHTML]="getIcon('trash') | safeHtml"></span> Remove Photo
+              </button>
+            </div>
+            
+            <div class="photo-upload-buttons" *ngIf="!photoPreview">
+              <label for="photo-camera" class="btn btn-primary btn-block">
+                📸 Take Photo
+              </label>
+              <input
+                type="file"
+                id="photo-camera"
+                accept="image/*"
+                capture="environment"
+                (change)="onPhotoSelected($event)"
+                style="display: none;"
+              />
+              <p class="help-text">
+                <span [innerHTML]="getIcon('info') | safeHtml"></span> Photo is required to verify your location for safety purposes
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Supply Needs -->
+        <div class="form-section" *ngIf="currentStep === 3" formGroupName="supply_needs">
+          <p class="help-text">
+            <span [innerHTML]="getIcon('package') | safeHtml"></span> Tell us what supplies you need
+          </p>
+
+          <div class="form-group">
+            <label for="people_count">
+              Number of People <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="people_count"
+              formControlName="people_count"
+              placeholder="e.g., 5"
+              min="1"
+              class="form-control"
+              [class.error]="shareLocationForm.get('supply_needs.people_count')?.invalid && shareLocationForm.get('supply_needs.people_count')?.touched"
+            />
+            <div class="error-message" *ngIf="shareLocationForm.get('supply_needs.people_count')?.invalid && shareLocationForm.get('supply_needs.people_count')?.touched">
+              Please specify how many people need assistance
+            </div>
+          </div>
+
+          <div class="supply-grid">
+            <div class="form-group">
+              <label for="water"><span [innerHTML]="getIcon('water') | safeHtml"></span> Water (liters)</label>
+              <input type="number" id="water" formControlName="water" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="food">🍚 Food (packs)</label>
+              <input type="number" id="food" formControlName="food" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="medical_supplies">💊 Medical</label>
+              <input type="number" id="medical_supplies" formControlName="medical_supplies" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="clothing"><span [innerHTML]="getIcon('clothing') | safeHtml"></span> Clothing (sets)</label>
+              <input type="number" id="clothing" formControlName="clothing" min="0" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="shelter_materials">⛺ Shelter</label>
+              <input type="number" id="shelter_materials" formControlName="shelter_materials" min="0" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="other">Other Needs</label>
+            <textarea
+              id="other"
+              formControlName="other"
+              placeholder="Any other supplies you need..."
+              class="form-control"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Step 4: QR Code Display -->
+        <div class="form-section" *ngIf="currentStep === 4">
+          <div class="qr-success-message">
+            <h3><span [innerHTML]="getIcon('check') | safeHtml"></span> Location Shared Successfully!</h3>
+            <p>Your location has been registered and is now visible to donators.</p>
+          </div>
+
+          <div class="qr-code-container">
+            <h4><span [innerHTML]="getIcon('qr-code') | safeHtml"></span> Your Unique QR Code</h4>
+            <p class="qr-instructions">
+              <strong>Important:</strong> Save this QR code! Donators will scan it when they deliver donations to you.
+            </p>
+
+            <div class="qr-code-display">
+              <qrcode 
+                [qrdata]="qrCodeData" 
+                [width]="256" 
+                [errorCorrectionLevel]="'M'"
+                [elementType]="'canvas'">
+              </qrcode>
+            </div>
+
+            <div class="qr-code-value">
+              <strong>Code:</strong> {{ qrCodeData }}
+            </div>
+
+            <div class="qr-instructions-box">
+              <h5><span [innerHTML]="getIcon('clipboard') | safeHtml"></span> How It Works:</h5>
+              <ul>
+                <li>✓ Donators will see your location on the map</li>
+                <li>✓ When they arrive, show them this QR code</li>
+                <li>✓ They will scan it to confirm the donation</li>
+                <li>✓ After scanning, you cannot request help again for 3 hours</li>
+              </ul>
+            </div>
+
+            <div class="qr-actions">
+              <button type="button" class="btn btn-primary" (click)="downloadQRCode()">
+                💾 Download QR Code
+              </button>
+            </div>
+
+            <div class="qr-confirmation">
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="qrCodeSaved" 
+                  [ngModelOptions]="{standalone: true}"
+                />
+                <span>I have saved my QR code and understand how to use it</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="form-footer">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="previousStep()" 
+            *ngIf="currentStep > 1 && currentStep < 4"
+            [disabled]="loading">
+            ← Previous
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            (click)="nextStep()" 
+            *ngIf="currentStep < 3"
+            [disabled]="!canProceedToNextStep() || loading">
+            Next →
+          </button>
+          
+          <button 
+            type="submit" 
+            class="btn btn-success" 
+            *ngIf="currentStep === 3"
+            [disabled]="!shareLocationForm.valid || loading">
+            <span *ngIf="!loading"><span [innerHTML]="getIcon('location-marker') | safeHtml"></span> Share Location & Register</span>
+            <span *ngIf="loading">Registering...</span>
+          </button>
+
+          <button 
+            type="button" 
+            class="btn btn-success" 
+            (click)="proceedToMap()" 
+            *ngIf="currentStep === 4"
+            [disabled]="!qrCodeSaved">
+            <span [innerHTML]="getIcon('map') | safeHtml"></span> Go to Map
+          </button>
+        </div>
+      </form>
+
+      <div class="auth-footer">
+        <p>Want to help others? <a routerLink="/register/donator">Register as Donator</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+

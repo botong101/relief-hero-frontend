@@ -1,0 +1,87 @@
+<header class="header">
+  <nav class="navbar">
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger-menu" (click)="toggleSidebar()" *ngIf="currentUser" title="Open Menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+
+    <div class="logo">
+      <a routerLink="/">
+        <span></span>
+        Relief Donation Tracker
+      </a>
+    </div>
+
+    <!-- User Info (Desktop) -->
+    <div class="user-info-desktop" *ngIf="currentUser">
+      <span class="user-email" *ngIf="isDonator">{{ currentUser.email }}</span>
+      <span class="user-email" *ngIf="isAffected">{{ getUserFullName() }}</span>
+      <span class="user-role badge" [class.badge-donator]="isDonator" [class.badge-affected]="isAffected">
+        {{ currentUser.role }}
+      </span>
+    </div>
+
+    <!-- Auth Links (when not logged in) -->
+    <div class="auth-links" *ngIf="!currentUser">
+      <a routerLink="/login" class="btn btn-secondary btn-sm">Login</a>
+      <a routerLink="/register" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </nav>
+</header>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" *ngIf="isSidebarOpen" (click)="closeSidebar()"></div>
+
+<!-- Sidebar Menu -->
+<aside [class]="'sidebar' + (isSidebarOpen ? ' sidebar-open' : '')" [attr.data-sidebar-open]="isSidebarOpen">
+  <div class="sidebar-header">
+    <h3>Menu</h3>
+    <button class="close-sidebar" (click)="closeSidebar()">×</button>
+  </div>
+
+  <div class="sidebar-user-info" *ngIf="currentUser">
+    <div class="user-avatar">
+      <span *ngIf="isDonator" [innerHTML]="getIcon('user', 'lg') | safeHtml"></span>
+      <span *ngIf="isAffected" [innerHTML]="getIcon('emergency', 'lg') | safeHtml"></span>
+    </div>
+    <div class="user-details">
+      <p class="user-name" *ngIf="isDonator">{{ currentUser.email }}</p>
+      <p class="user-name" *ngIf="isAffected">{{ getUserFullName() }}</p>
+      <span class="user-role badge" [class.badge-donator]="isDonator" [class.badge-affected]="isAffected">
+        {{ currentUser.role }}
+      </span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" *ngIf="currentUser">
+    <ul>
+      <li *ngIf="isDonator">
+        <a routerLink="/donations" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="nav-icon" [innerHTML]="getIcon('copy') | safeHtml"></span>
+          <span>Donation History</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/acknowledgement" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="nav-icon" [innerHTML]="getIcon('check') | safeHtml"></span>
+          <span>Acknowledgements</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/map" routerLinkActive="active" (click)="closeSidebar()">
+          <span class="nav-icon" [innerHTML]="getIcon('map-pin') | safeHtml"></span>
+          <span>Map</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="currentUser && isDonator">
+    <button class="btn btn-logout" (click)="logout()">
+      <span class="nav-icon" [innerHTML]="getIcon('close') | safeHtml"></span>
+      <span>Logout</span>
+    </button>
+  </div>
+</aside>

@@ -1,0 +1,723 @@
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h2>Emergency Response Tracking</h2>
+        </div>
+        <p class="subtitle">
+          Real-time coordination for emergency supply distribution
+        </p>
+        <div class="status-indicator" [ngClass]="isOnline ? 'status-active' : 'status-emergency'">
+          <span [innerHTML]="getIcon(isOnline ? 'online' : 'offline') | safeHtml"></span>
+          <span *ngIf="isOnline">System Online</span>
+          <span *ngIf="!isOnline">Connection Lost - Updates will sync when reconnected</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-error" *ngIf="error">
+      {{ error }}
+    </div>
+
+    <!-- Map Controls -->
+    <div class="map-controls">
+      <!-- Share Location Button (Affected Users Only) -->
+      <button 
+        *ngIf="isAffectedUser && !isLocationSharing" 
+        class="btn btn-emergency btn-lg" 
+        (click)="openShareLocationModal()">
+        <span [innerHTML]="getIcon('emergency') | safeHtml"></span>
+        Request Emergency Assistance
+      </button>
+      
+      <button 
+        *ngIf="isAffectedUser && isLocationSharing" 
+        class="btn btn-secondary" 
+        (click)="stopSharingLocation()">
+        <span [innerHTML]="getIcon('stop') | safeHtml"></span>
+        Stop Location Sharing
+      </button>
+      
+      <button 
+        *ngIf="isAffectedUser && isLocationSharing" 
+        class="btn btn-primary" 
+        (click)="openQRModal()">
+        <span [innerHTML]="getIcon('qr-code') | safeHtml"></span>
+        Show QR Code
+      </button>
+      
+      <button class="btn btn-outline" (click)="loadLocations()">
+        <span [innerHTML]="getIcon('refresh') | safeHtml"></span>
+        Refresh Map
+      </button>
+      
+      <button 
+        *ngIf="!isAffectedUser" 
+        class="btn btn-primary" 
+        (click)="openScanner()">
+        <span [innerHTML]="getIcon('qr-code') | safeHtml"></span>
+        Scan Response QR
+      </button>
+      
+
+
+    <!-- Map Reference -->
+    <div class="modern-legend-panel" *ngIf="!loading">
+      <div class="legend-header">
+        <h4 class="legend-title">Map Reference</h4>
+        <div class="legend-subtitle">Interactive marker identification</div>
+      </div>
+
+    </div>
+
+    <div class="map-info modern-map-info" *ngIf="!loading">
+
+      
+      <!-- Affected User: Response Team Tracking Notification -->
+      <div class="alert alert-success tracking-notification" *ngIf="trackingStatus.isTracking && isAffectedUser" [@slideIn]>
+        <div class="tracking-header">
+          <span [innerHTML]="getIcon('truck') | safeHtml" class="tracking-icon"></span>
+          <div class="tracking-info">
+            <strong>Response Team En Route</strong>
+            <p class="tracking-message">{{ trackingStatus.donatorInfo?.firstName }} {{ trackingStatus.donatorInfo?.lastName }} is responding to your location</p>
+          </div>
+          <div class="tracking-status status-tracking">
+            <span class="pulse-dot"></span>
+            <small>Live Tracking Active</small>
+          </div>
+        </div>
+        
+        <div class="tracking-details" *ngIf="trackingStatus.lastUpdate">
+          <div class="detail-item">
+            <span [innerHTML]="getIcon('clock') | safeHtml"></span>
+            <small>
+              Last updated: {{ formatTrackingTime(trackingStatus.lastUpdate.timestamp) }}
+              <br>
+              Location accuracy: ±{{ trackingStatus.lastUpdate.accuracy.toFixed(0) }}m
+            </small>
+          </div>
+          <div class="detail-item">
+            <span [innerHTML]="getIcon('user') | safeHtml"></span>
+            <small>
+              Responder: {{ trackingStatus.donatorInfo?.firstName }} {{ trackingStatus.donatorInfo?.lastName }}
+              <br>
+              Estimated contact time: Calculating...
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Responder User: Own Tracking Notification -->
+      <div class="alert alert-info tracking-notification" *ngIf="trackingStatus.isTracking && !isAffectedUser" [@slideIn]>
+        <div class="tracking-header">
+          <span [innerHTML]="getIcon('location-marker') | safeHtml" class="tracking-icon"></span>
+          <div class="tracking-info">
+            <strong>Response Mission Active</strong>
+            <p class="tracking-message">Your location is being shared with the affected user</p>
+          </div>
+          <div class="tracking-status status-tracking">
+            <span class="pulse-dot"></span>
+            <small>Live Tracking</small>
+          </div>
+        </div>
+        
+        <div class="tracking-details" *ngIf="trackingStatus.lastUpdate">
+          <div class="detail-item">
+            <span [innerHTML]="getIcon('clock') | safeHtml"></span>
+            <small>
+              Last updated: {{ formatTrackingTime(trackingStatus.lastUpdate.timestamp) }}
+              <br>
+              GPS accuracy: ±{{ trackingStatus.lastUpdate.accuracy.toFixed(0) }}m
+            </small>
+          </div>
+          <div class="tracking-actions flex gap-2">
+            <button class="btn btn-sm btn-secondary" (click)="turnOffLocationSharing()">
+              <span [innerHTML]="getIcon('stop') | safeHtml"></span>
+              End Mission
+            </button>
+            <button class="btn btn-sm btn-primary" (click)="openCurrentLocationInGoogleMaps()">
+              <span [innerHTML]="getIcon('external-link') | safeHtml"></span>
+              Open in Maps
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="offlineQueue.length > 0" class="alert alert-warning">
+        <span [innerHTML]="getIcon('warning') | safeHtml"></span>
+        <span>{{ offlineQueue.length }} location update(s) pending synchronization</span>
+      </div>
+    </div>
+
+    <div class="spinner" *ngIf="loading"></div>
+
+    <div id="map" class="map-container"></div>
+  </div>
+</div>
+
+<!-- Location Details Modal (shown when marker is clicked) -->
+<div class="modal-overlay" *ngIf="selectedLocation" [@slideIn] (click)="closeLocationCard()">
+  <div class="modal modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header modern-header">
+      <div class="modal-title-section">
+        <div class="title-icon">
+          <span [innerHTML]="getIcon('emergency') | safeHtml"></span>
+        </div>
+        <div class="title-content">
+          <h2 class="title-main">Emergency Request</h2>
+          <p class="title-subtitle">Response coordination details</p>
+        </div>
+      </div>
+      <button class="modal-close modern-close" (click)="closeLocationCard()">
+        <span [innerHTML]="getIcon('close') | safeHtml"></span>
+      </button>
+    </div>
+    
+    <div class="modal-body modern-body">
+    
+    <!-- Contact Information -->
+    <div class="info-section">
+      <h4>
+        <span [innerHTML]="getIcon('phone') | safeHtml"></span>
+        Contact Information
+      </h4>
+      <div class="info-grid">
+        <div class="info-item">
+          <span [innerHTML]="getIcon('phone') | safeHtml" class="info-icon"></span>
+          <div class="info-content">
+            <span class="info-label">Phone:</span>
+            <span class="info-value">{{ selectedLocation.phone }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="selectedLocation.facebook">
+          <span [innerHTML]="getIcon('facebook') | safeHtml" class="info-icon"></span>
+          <div class="info-content">
+            <span class="info-label">Facebook:</span>
+            <span class="info-value">{{ selectedLocation.facebook }}</span>
+          </div>
+        </div>
+        <div class="info-item" *ngIf="selectedLocation.email">
+          <span [innerHTML]="getIcon('mail') | safeHtml" class="info-icon"></span>
+          <div class="info-content">
+            <span class="info-label">Email:</span>
+            <span class="info-value">{{ selectedLocation.email }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Verification Photo Section -->
+    <div class="info-section" *ngIf="selectedLocation.photo">
+      <h4>
+        <span [innerHTML]="getIcon('camera') | safeHtml"></span>
+        Situation Verification
+      </h4>
+      <div class="verification-photo">
+        <img [src]="selectedLocation.photo" 
+             alt="Emergency situation verification" 
+             class="situation-image"
+             (error)="onImageError($event)">
+        <div class="photo-caption">
+          <span [innerHTML]="getIcon('info') | safeHtml"></span>
+          Verified emergency situation photo
+        </div>
+      </div>
+    </div>
+    
+    <!-- Supply Needs -->
+    <div class="info-section" *ngIf="selectedLocation.supply_needs">
+      <h4>
+        <span [innerHTML]="getIcon('food') | safeHtml"></span>
+        Required Supplies
+      </h4>
+      <div class="supply-grid">
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.people_count">
+          <span [innerHTML]="getIcon('users') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Affected People:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.people_count }}</span>
+          </div>
+        </div>
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.water">
+          <span [innerHTML]="getIcon('water') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Water:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.water }} bottles</span>
+          </div>
+        </div>
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.food">
+          <span [innerHTML]="getIcon('food') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Food Packs:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.food }} packs</span>
+          </div>
+        </div>
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.medical_supplies">
+          <span [innerHTML]="getIcon('medical') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Medical Supplies:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.medical_supplies }}</span>
+          </div>
+        </div>
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.clothing">
+          <span [innerHTML]="getIcon('clothing') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Clothing:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.clothing }} sets</span>
+          </div>
+        </div>
+        <div class="supply-item" *ngIf="selectedLocation.supply_needs.shelter_materials">
+          <span [innerHTML]="getIcon('shelter') | safeHtml" class="supply-icon"></span>
+          <div class="supply-content">
+            <span class="supply-label">Shelter Materials:</span>
+            <span class="supply-value">{{ selectedLocation.supply_needs.shelter_materials }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="other-needs" *ngIf="selectedLocation.supply_needs.other">
+        <h5>Additional Requirements:</h5>
+        <p>{{ selectedLocation.supply_needs.other }}</p>
+      </div>
+    </div>
+    
+    <!-- Notes -->
+    <div class="info-section" *ngIf="selectedLocation.notes">
+      <h4>📝 Additional Notes</h4>
+      <p class="notes-text">{{ selectedLocation.notes }}</p>
+    </div>
+    
+    <!-- Donators On The Way Section -->
+    <div class="info-section" *ngIf="selectedLocation.donators_on_the_way && selectedLocation.donators_on_the_way.length > 0">
+      <h4><span [innerHTML]="getIcon('truck') | safeHtml"></span> Donators On The Way</h4>
+      <div class="donators-list">
+        <div class="donator-item" *ngFor="let donator of selectedLocation.donators_on_the_way">
+          <div class="donator-icon"><span [innerHTML]="getIcon('user') | safeHtml"></span></div>
+          <div class="donator-info">
+            <div class="donator-name">{{ donator.donator_name }}</div>
+            <div class="donator-time">
+              Marked at: {{ donator.marked_at | date:'short' }}
+            </div>
+            <div class="donator-status" *ngIf="donator.arrived">
+              <span [innerHTML]="getIcon('check') | safeHtml"></span> Arrived
+            </div>
+            <div class="donator-tracking" *ngIf="!donator.arrived">
+              <div class="tracking-indicator" 
+                   *ngIf="trackingStatus.isTracking && trackingStatus.donatorInfo?.username === donator.donator_name">
+                <span class="live-indicator"><span [innerHTML]="getIcon('emergency', 'sm') | safeHtml"></span> LIVE</span>
+                <small>{{ trackingStatus.donatorInfo?.username }} is on the way for supplies</small>
+                <div *ngIf="trackingStatus.lastUpdate" class="tracking-details">
+                  <small>Last update: {{ formatTrackingTime(trackingStatus.lastUpdate.timestamp) }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="donators-count">{{ selectedLocation.donators_on_the_way.length }} donator(s) heading to this location</p>
+    </div>
+    
+    <!-- Real-time Tracking Status (if active) -->
+    <div class="info-section tracking-section" *ngIf="trackingStatus.isTracking && selectedLocation">
+      <h4><span [innerHTML]="getIcon('location-marker') | safeHtml"></span> Real-Time Tracking</h4>
+      <div class="tracking-card">
+        <div class="tracking-header">
+          <span class="tracking-pulse"><span [innerHTML]="getIcon('emergency', 'sm') | safeHtml"></span></span>
+          <strong>{{ trackingStatus.donatorInfo?.username }} is on the way</strong>
+        </div>
+        <div class="tracking-message">
+          Please standby for contact
+        </div>
+        <div class="tracking-info" *ngIf="trackingStatus.lastUpdate">
+          <div class="tracking-detail">
+            <span class="detail-icon">⏰</span>
+            <span>Last update: {{ formatTrackingTime(trackingStatus.lastUpdate.timestamp) }}</span>
+          </div>
+          <div class="tracking-detail">
+            <span class="detail-icon" [innerHTML]="getIcon('location-marker') | safeHtml"></span>
+            <span>Accuracy: ±{{ trackingStatus.lastUpdate.accuracy.toFixed(0) }}m</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+    
+    <!-- Modal Footer with Action Buttons -->
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="copyCoordinates(selectedLocation)">
+        <span [innerHTML]="getIcon('copy') | safeHtml"></span>
+        Copy Coordinates
+      </button>
+      <button class="btn btn-primary" (click)="openInMaps(selectedLocation)">
+        <span [innerHTML]="getIcon('external-link') | safeHtml"></span>
+        Open in Maps
+      </button>
+      <!-- Response Mission Button (Responder Users Only) -->
+      <button 
+        *ngIf="!isAffectedUser" 
+        class="btn btn-success btn-lg" 
+        (click)="markAsOnTheWay(selectedLocation)">
+        <span [innerHTML]="getIcon('truck') | safeHtml"></span>
+        Start Response Mission
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Emergency Request Modal (Affected Users Only) -->
+<div class="modal" *ngIf="showShareModal" (click)="closeShareModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()" [@slideIn]>
+    <div class="modal-header">
+      <div class="modal-title">
+        <span [innerHTML]="getIcon('emergency') | safeHtml" class="modal-icon"></span>
+        <h3>Request Emergency Assistance</h3>
+      </div>
+      <button class="modal-close btn btn-sm btn-secondary" (click)="closeShareModal()">
+        <span [innerHTML]="getIcon('close') | safeHtml"></span>
+      </button>
+    </div>
+    
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+        <span class="step-number">1</span>
+        <span class="step-label">Contact Info</span>
+      </div>
+      <div class="step" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
+        <span class="step-number">2</span>
+        <span class="step-label">Verify Photo</span>
+      </div>
+      <div class="step" [class.active]="currentStep === 3">
+        <span class="step-number">3</span>
+        <span class="step-label">Supply Needs</span>
+      </div>
+    </div>
+
+    <form [formGroup]="shareLocationForm" (ngSubmit)="submitShareLocation()">
+      <!-- Step 1: Contact Information -->
+      <div class="modal-body" *ngIf="currentStep === 1">
+        <div class="help-section">
+          <span [innerHTML]="getIcon('phone') | safeHtml" class="help-icon"></span>
+          <p class="help-text">
+            Provide your contact information so emergency responders can coordinate with you
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">
+            Phone Number <span class="required">*</span>
+            <small>(e.g., 09123456789 or +639123456789)</small>
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            formControlName="phone"
+            placeholder="09123456789"
+            class="form-control"
+            [class.error]="shareLocationForm.get('phone')?.invalid && shareLocationForm.get('phone')?.touched"
+          />
+          <div class="error-message" *ngIf="shareLocationForm.get('phone')?.invalid && shareLocationForm.get('phone')?.touched">
+            Please enter a valid PH mobile number
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="facebook">
+            Facebook Profile
+            <small>(optional)</small>
+          </label>
+          <input
+            type="text"
+            id="facebook"
+            formControlName="facebook"
+            placeholder="facebook.com/yourprofile"
+            class="form-control"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">
+            Email Address
+            <small>(optional)</small>
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="your@email.com"
+            class="form-control"
+            [class.error]="shareLocationForm.get('email')?.invalid && shareLocationForm.get('email')?.touched"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="notes">
+            Additional Notes
+            <small>(optional - describe your situation)</small>
+          </label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            placeholder="Any important information donators should know..."
+            class="form-control"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Step 2: Photo Verification -->
+      <div class="modal-body" *ngIf="currentStep === 2">
+        <div class="help-section">
+          <span [innerHTML]="getIcon('camera') | safeHtml" class="help-icon"></span>
+          <p class="help-text">
+            Capture a photo to verify your location and situation (required for response coordination)
+          </p>
+        </div>
+        
+        <div class="photo-upload-section">
+          <div class="photo-preview" *ngIf="photoPreview">
+            <img [src]="photoPreview" alt="Location verification photo" />
+            <button type="button" class="btn btn-secondary" (click)="removePhoto()">
+              <span [innerHTML]="getIcon('close') | safeHtml"></span>
+              Remove Photo
+            </button>
+          </div>
+          
+          <div class="photo-upload-buttons" *ngIf="!photoPreview">
+            <label for="photo-camera" class="btn btn-primary btn-lg w-full">
+              <span [innerHTML]="getIcon('camera') | safeHtml"></span>
+              Capture Verification Photo
+            </label>
+            <input
+              type="file"
+              id="photo-camera"
+              accept="image/*"
+              capture="environment"
+              (change)="onPhotoSelected($event)"
+              style="display: none;"
+            />
+            <div class="alert alert-info mt-4">
+              <span [innerHTML]="getIcon('info') | safeHtml"></span>
+              <span>Photo verification helps responders assess the situation and locate you accurately</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Supply Needs -->
+      <div class="modal-body" *ngIf="currentStep === 3" formGroupName="supply_needs">
+        <div class="help-section">
+          <span [innerHTML]="getIcon('food') | safeHtml" class="help-icon"></span>
+          <p class="help-text">
+            Specify your immediate supply requirements to help responders prepare
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="people_count">
+            Number of People <span class="required">*</span>
+          </label>
+          <input
+            type="number"
+            id="people_count"
+            formControlName="people_count"
+            placeholder="e.g., 5"
+            min="1"
+            class="form-control"
+            [class.error]="shareLocationForm.get('supply_needs.people_count')?.invalid && shareLocationForm.get('supply_needs.people_count')?.touched"
+          />
+          <div class="error-message" *ngIf="shareLocationForm.get('supply_needs.people_count')?.invalid && shareLocationForm.get('supply_needs.people_count')?.touched">
+            Please specify how many people need assistance
+          </div>
+        </div>
+
+        <div class="supply-grid">
+          <div class="form-group">
+            <label for="water"><span [innerHTML]="getIcon('water') | safeHtml"></span> Water (liters)</label>
+            <input type="number" id="water" formControlName="water" min="0" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="food">🍚 Food (packs)</label>
+            <input type="number" id="food" formControlName="food" min="0" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="medical_supplies">💊 Medical</label>
+            <input type="number" id="medical_supplies" formControlName="medical_supplies" min="0" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="clothing"><span [innerHTML]="getIcon('clothing') | safeHtml"></span> Clothing (sets)</label>
+            <input type="number" id="clothing" formControlName="clothing" min="0" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label for="shelter_materials">⛺ Shelter</label>
+            <input type="number" id="shelter_materials" formControlName="shelter_materials" min="0" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="other">Other Needs</label>
+          <textarea
+            id="other"
+            formControlName="other"
+            placeholder="Any other supplies you need..."
+            class="form-control"
+            rows="2"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Modal Footer with Step Navigation -->
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="previousStep()" 
+          *ngIf="currentStep > 1"
+          [disabled]="submitting">
+          ← Previous
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="nextStep()" 
+          *ngIf="currentStep < 3"
+          [disabled]="!canProceedToNextStep() || submitting">
+          Next →
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn btn-success" 
+          *ngIf="currentStep === 3"
+          [disabled]="!shareLocationForm.valid || submitting">
+          <span *ngIf="!submitting"><span [innerHTML]="getIcon('location-marker') | safeHtml"></span> Share Location</span>
+          <span *ngIf="submitting">Sharing...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- QR Code Modal for Affected Users -->
+<div class="modal-overlay qr-modal" *ngIf="showQRModal" (click)="closeQRModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><span [innerHTML]="getIcon('qr-code') | safeHtml"></span> Your Donation QR Code</h3>
+      <button class="close-button" (click)="closeQRModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-display-container">
+        <p class="qr-instructions">
+          <strong>Show this QR code to donators when they arrive to deliver donations.</strong>
+        </p>
+
+        <div class="qr-code-display">
+          <qrcode 
+            [qrdata]="userQRCode" 
+            [width]="256" 
+            [errorCorrectionLevel]="'M'"
+            [elementType]="'canvas'">
+          </qrcode>
+        </div>
+
+        <div class="qr-code-value">
+          <strong>Code:</strong> {{ userQRCode }}
+        </div>
+
+        <div class="qr-info-box">
+          <h5><span [innerHTML]="getIcon('clipboard') | safeHtml"></span> How It Works:</h5>
+          <ul>
+            <li>✓ Your location is visible to donators on the map</li>
+            <li>✓ When a donator arrives, show them this QR code</li>
+            <li>✓ They will scan it to confirm the donation delivery</li>
+            <li>✓ After scanning, you cannot request help again for 3 hours</li>
+            <li>✓ Keep this code safe and only show it to real donators</li>
+          </ul>
+        </div>
+
+        <div class="qr-actions">
+          <button type="button" class="btn btn-primary" (click)="downloadQRCode()">
+            <span [innerHTML]="getIcon('download') | safeHtml"></span>
+            Download QR Code
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="closeQRModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as On The Way Confirmation Modal -->
+<div class="modal-overlay ontheway-modal" *ngIf="showOnTheWayModal" (click)="closeOnTheWayModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><span [innerHTML]="getIcon('truck') | safeHtml"></span> Mark as On The Way</h3>
+      <button class="close-button" (click)="closeOnTheWayModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="ontheway-instructions">
+        <h4><span [innerHTML]="getIcon('alert') | safeHtml"></span> Important Instructions</h4>
+        <div class="instruction-box warning">
+          <p><strong>Before marking yourself as on the way:</strong></p>
+          <ul>
+            <li><span [innerHTML]="getIcon('phone') | safeHtml"></span> <strong>Contact the affected user first</strong> using the phone number or Facebook provided</li>
+            <li><span [innerHTML]="getIcon('check') | safeHtml"></span> Verify their location and confirm they still need help</li>
+            <li><span [innerHTML]="getIcon('map') | safeHtml"></span> <strong>Use "Get Directions" button below</strong> to plan your route via Google Maps</li>
+            <li><span [innerHTML]="getIcon('package') | safeHtml"></span> Confirm what supplies you're bringing</li>
+          </ul>
+        </div>
+
+        <div class="instruction-box info">
+          <p><strong>After marking as on the way:</strong></p>
+          <ul>
+            <li>✓ The affected user will see your name and time</li>
+            <li>✓ You commit to delivering the donation</li>
+            <li>✓ Upon arrival, scan their QR code to confirm delivery</li>
+          </ul>
+        </div>
+
+        <div class="confirmation-question">
+          <p><strong>Have you contacted the affected user and confirmed their location?</strong></p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="closeOnTheWayModal()">
+          Cancel
+        </button>
+        <button class="btn btn-info" (click)="openGoogleMapsDirections(selectedLocationForDonation)">
+          <span [innerHTML]="getIcon('map') | safeHtml"></span> Get Directions (Google Maps)
+        </button>
+        <button class="btn btn-warning" (click)="confirmOnTheWay()">
+          Yes, I'm On The Way
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div class="modal-overlay" *ngIf="showScannerModal" (click)="closeScannerModal()">
+  <div class="modal-content scanner-modal" (click)="$event.stopPropagation()">
+    <app-qr-scanner 
+      (scanned)="onQRScanned($event)" 
+      (closed)="closeScannerModal()">
+    </app-qr-scanner>
+  </div>
+</div>
+
+<!-- Donation Confirmation Modal (for affected users) -->
+<app-donation-confirmation-modal
+  [show]="showDonationConfirmationModal"
+  [donationData]="donationNotificationData"
+  (closeModal)="closeDonationConfirmationModal()"
+  (submitRating)="onSubmitRating($event)">
+</app-donation-confirmation-modal>
+

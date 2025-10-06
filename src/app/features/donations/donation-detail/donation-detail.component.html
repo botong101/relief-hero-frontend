@@ -1,0 +1,114 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Donation Details</h1>
+    <a routerLink="/donations" class="btn btn-secondary">← Back to List</a>
+  </div>
+
+  <div class="spinner" *ngIf="loading"></div>
+
+  <div class="alert alert-error" *ngIf="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && donation" class="donation-detail">
+    <!-- Main Info Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>{{ donation.title }}</h2>
+        <span [class]="getStatusBadgeClass(donation.status)">
+          {{ donation.status }}
+        </span>
+      </div>
+
+      <div class="detail-section">
+        <h3>Description</h3>
+        <p>{{ donation.description }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Donation Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Category:</span>
+            <span class="info-value">{{ donation.category }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Quantity:</span>
+            <span class="info-value">{{ donation.quantity }} {{ donation.unit }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Status:</span>
+            <span [class]="getStatusBadgeClass(donation.status)">{{ donation.status }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Created:</span>
+            <span class="info-value">{{ donation.created_at | date:'medium' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Parties Involved</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Donator:</span>
+            <span class="info-value">{{ donation.donator_name }} ({{ donation.donator_email }})</span>
+          </div>
+          <div class="info-item" *ngIf="donation.recipient_name">
+            <span class="info-label">Recipient:</span>
+            <span class="info-value">{{ donation.recipient_name }}</span>
+          </div>
+          <div class="info-item" *ngIf="!donation.recipient_name">
+            <span class="info-label">Recipient:</span>
+            <span class="info-value text-muted">Not assigned yet</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Locations</h3>
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <span class="info-label">Pickup:</span>
+            <span class="info-value">{{ donation.pickup_location }}</span>
+          </div>
+          <div class="info-item full-width" *ngIf="donation.delivery_location">
+            <span class="info-label">Delivery:</span>
+            <span class="info-value">{{ donation.delivery_location }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="donation.notes">
+        <h3>Additional Notes</h3>
+        <p>{{ donation.notes }}</p>
+      </div>
+
+      <div class="detail-section" *ngIf="donation.delivered_at">
+        <h3>Delivery Information</h3>
+        <p>Delivered on: {{ donation.delivered_at | date:'full' }}</p>
+      </div>
+    </div>
+
+    <!-- Tracking History Card -->
+    <div class="card mt-4" *ngIf="trackingHistory.length > 0">
+      <div class="card-header">
+        <h2>📍 Tracking History</h2>
+      </div>
+
+      <div class="tracking-timeline">
+        <div *ngFor="let track of trackingHistory" class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <span [class]="getStatusBadgeClass(track.status)">{{ track.status }}</span>
+              <span class="timeline-date">{{ track.timestamp | date:'short' }}</span>
+            </div>
+            <p *ngIf="track.notes" class="timeline-notes">{{ track.notes }}</p>
+            <p *ngIf="track.updated_by_name" class="timeline-user">Updated by: {{ track.updated_by_name }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

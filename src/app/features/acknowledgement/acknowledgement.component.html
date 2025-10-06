@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<div class="acknowledgement-container">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        Donation Acknowledgements
+      </h1>
+      <p class="page-subtitle">Real-time announcements of successful donations to affected users</p>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- Contributors Ranking Section -->
+    <section class="ranking-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Top Contributors
+        </h2>
+        <p class="section-subtitle">Heroes making a difference through QR donations</p>
+      </div>
+
+      <!-- Ranking Loading State -->
+      <div *ngIf="rankingLoading" class="ranking-loading">
+        <div class="loading-spinner small"></div>
+        <p>Loading contributors ranking...</p>
+      </div>
+
+      <!-- Ranking Error State -->
+      <div *ngIf="rankingError" class="ranking-error">
+        <p>{{ rankingError }}</p>
+        <button (click)="loadContributorsRanking()" class="retry-btn small">Retry</button>
+      </div>
+
+      <!-- Contributors List -->
+      <div *ngIf="!rankingLoading && !rankingError && contributors.length > 0" class="contributors-grid">
+        <div *ngFor="let contributor of contributors; trackBy: trackByContributorId" 
+             class="contributor-card" [class.top-three]="contributor.rank <= 3">
+          <div class="contributor-rank">
+            <span class="rank-medal">{{ getRankMedal(contributor.rank) }}</span>
+            <span class="rank-number">#{{ contributor.rank }}</span>
+          </div>
+          <div class="contributor-info">
+            <h3 class="contributor-name">{{ contributor.donator_name }}</h3>
+            <div class="contributor-stats">
+              <div class="stat-item">
+                <span class="stat-number">{{ contributor.total_donations }}</span>
+                <span class="stat-label">Donations</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">{{ contributor.total_people_helped }}</span>
+                <span class="stat-label">People Helped</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">{{ getTotalSuppliesContributed(contributor.supplies_contributed) }}</span>
+                <span class="stat-label">Total Supplies</span>
+              </div>
+            </div>
+            <div class="supplies-breakdown">
+              <small>{{ getSuppliesBreakdown(contributor.supplies_contributed) }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-section">
+      <div class="loading-spinner"></div>
+      <p>Loading donation announcements...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-section">
+      <div class="error-icon">
+        <span [innerHTML]="getIcon('warning', 'lg') | safeHtml"></span>
+      </div>
+      <p>{{ error }}</p>
+      <button (click)="loadAcknowledgments()" class="retry-btn">Try Again</button>
+    </div>
+
+    <!-- Acknowledgments List -->
+    <div *ngIf="!loading && !error" class="acknowledgments-section">
+      <div *ngIf="acknowledgments.length === 0" class="no-acknowledgments">
+        <div class="empty-icon">📭</div>
+        <h3>No donations yet</h3>
+        <p>Your donation acknowledgments will appear here.</p>
+      </div>
+
+      <div *ngIf="acknowledgments.length > 0" class="acknowledgments-list">
+        <div class="acknowledgments-count">
+          <span class="count-badge">{{ acknowledgments.length }}</span>
+          <span>Total Donations Made</span>
+        </div>
+
+        <div *ngFor="let ack of acknowledgments; trackBy: trackByDonationId" 
+             class="acknowledgment-card">
+          <div class="card-header">
+            <div class="status-badge" [class.confirmed]="ack.has_confirmation">
+              {{ ack.has_confirmation ? '✅ Confirmed' : '⏳ Pending Confirmation' }}
+            </div>
+            <div class="time-badge">{{ getTimeAgo(ack.donated_at) }}</div>
+          </div>
+
+          <div class="card-content">
+            <div class="recipient-info">
+              <h3 class="recipient-name">{{ ack.affected_user }}</h3>
+              <span class="recipient-label">Affected User</span>
+            </div>
+
+            <div class="supplies-section">
+              <h4>📦 Supplies Donated</h4>
+              <div class="supplies-grid">
+                <div *ngIf="ack.supplies_donated.water" class="supply-item">
+                  <span class="supply-icon">💧</span>
+                  <span class="supply-amount">{{ ack.supplies_donated.water }}</span>
+                  <span class="supply-label">Water</span>
+                </div>
+                <div *ngIf="ack.supplies_donated.food" class="supply-item">
+                  <span class="supply-icon">🍞</span>
+                  <span class="supply-amount">{{ ack.supplies_donated.food }}</span>
+                  <span class="supply-label">Food</span>
+                </div>
+                <div *ngIf="ack.supplies_donated.medical_supplies" class="supply-item">
+                  <span class="supply-icon">🏥</span>
+                  <span class="supply-amount">{{ ack.supplies_donated.medical_supplies }}</span>
+                  <span class="supply-label">Medical</span>
+                </div>
+                <div *ngIf="ack.supplies_donated.clothing" class="supply-item">
+                  <span class="supply-icon">👕</span>
+                  <span class="supply-amount">{{ ack.supplies_donated.clothing }}</span>
+                  <span class="supply-label">Clothing</span>
+                </div>
+                <div *ngIf="ack.supplies_donated.shelter_materials" class="supply-item">
+                  <span class="supply-icon">🏠</span>
+                  <span class="supply-amount">{{ ack.supplies_donated.shelter_materials }}</span>
+                  <span class="supply-label">Shelter</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="ack.has_confirmation" class="confirmation-section">
+              <h4>✅ Recipient Confirmation</h4>
+              <div class="received-supplies">
+                <p class="confirmation-status" 
+                   [class.confirmed]="ack.supplies_received.all_supplies_received"
+                   [class.partial]="!ack.supplies_received.all_supplies_received">
+                  {{ ack.supplies_received.all_supplies_received ? 
+                     '✅ All supplies received as promised' : 
+                     'Some supplies not received as expected' }}
+                </p>
+                
+                <div *ngIf="ack.user_feedback.rating" class="rating-display">
+                  <span class="rating-label">Rating:</span>
+                  <div class="stars">
+                    <span *ngFor="let star of [1,2,3,4,5]" 
+                          class="star" 
+                          [class.filled]="star <= ack.user_feedback.rating">★</span>
+                  </div>
+                  <span class="rating-text">({{ ack.user_feedback.rating }}/5)</span>
+                </div>
+
+                <div *ngIf="ack.user_feedback.comment" class="feedback-comment">
+                  <p><strong>Feedback:</strong> "{{ ack.user_feedback.comment }}"</p>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!ack.has_confirmation" class="pending-section">
+              <p class="pending-message">⏳ Waiting for recipient confirmation...</p>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="location-info">
+              <span class="location-icon">📍</span>
+              <span>{{ ack.location.latitude }}, {{ ack.location.longitude }}</span>
+            </div>
+            <div class="date-info">
+              <span class="date-icon">�</span>
+              <span>{{ ack.donated_at | date:'short' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    <p>🔄 Auto-refreshing every 30 seconds • Updated {{ getCurrentTime() }}</p>
+  </footer>
+</div>

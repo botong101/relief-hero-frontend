@@ -1,0 +1,152 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Create New Donation</h1>
+    <a routerLink="/donations" class="btn btn-secondary">← Cancel</a>
+  </div>
+
+  <div class="form-container">
+    <div class="card">
+      <div class="alert alert-success" *ngIf="success">
+        {{ success }}
+      </div>
+
+      <div class="alert alert-error" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <form [formGroup]="donationForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label for="title">Title *</label>
+          <input
+            type="text"
+            id="title"
+            class="form-control"
+            formControlName="title"
+            placeholder="e.g., 100 boxes of food supplies"
+          />
+          <div class="form-error" *ngIf="title?.invalid && title?.touched">
+            <span *ngIf="title?.errors?.['required']">Title is required</span>
+            <span *ngIf="title?.errors?.['maxlength']">Title is too long</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea
+            id="description"
+            class="form-control"
+            formControlName="description"
+            rows="4"
+            placeholder="Describe what you're donating..."
+          ></textarea>
+          <div class="form-error" *ngIf="description?.invalid && description?.touched">
+            <span *ngIf="description?.errors?.['required']">Description is required</span>
+          </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label for="category">Category *</label>
+            <select id="category" class="form-control" formControlName="category">
+              <option *ngFor="let cat of categories" [value]="cat.value">
+                {{ cat.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="quantity">Quantity *</label>
+            <input
+              type="number"
+              id="quantity"
+              class="form-control"
+              formControlName="quantity"
+              min="1"
+            />
+            <div class="form-error" *ngIf="quantity?.invalid && quantity?.touched">
+              <span *ngIf="quantity?.errors?.['required']">Quantity is required</span>
+              <span *ngIf="quantity?.errors?.['min']">Quantity must be at least 1</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="unit">Unit *</label>
+            <input
+              type="text"
+              id="unit"
+              class="form-control"
+              formControlName="unit"
+              placeholder="e.g., boxes, liters, pieces"
+            />
+            <div class="form-error" *ngIf="unit?.invalid && unit?.touched">
+              <span *ngIf="unit?.errors?.['required']">Unit is required</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Pickup Information</h3>
+          
+          <div class="form-group">
+            <label for="pickup_location">Pickup Location *</label>
+            <textarea
+              id="pickup_location"
+              class="form-control"
+              formControlName="pickup_location"
+              rows="2"
+              placeholder="Enter pickup address..."
+            ></textarea>
+            <div class="form-error" *ngIf="pickup_location?.invalid && pickup_location?.touched">
+              <span *ngIf="pickup_location?.errors?.['required']">Pickup location is required</span>
+            </div>
+          </div>
+
+          <div class="location-helper">
+            <button type="button" class="btn btn-secondary" (click)="setCurrentLocation()">
+              📍 Use My Current Location
+            </button>
+            <small class="help-text">This will add GPS coordinates for accurate mapping</small>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Delivery Information (Optional)</h3>
+          
+          <div class="form-group">
+            <label for="delivery_location">Delivery Location</label>
+            <textarea
+              id="delivery_location"
+              class="form-control"
+              formControlName="delivery_location"
+              rows="2"
+              placeholder="Enter delivery address (if known)..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Additional Notes</label>
+          <textarea
+            id="notes"
+            class="form-control"
+            formControlName="notes"
+            rows="3"
+            placeholder="Any special instructions or notes..."
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="loading || donationForm.invalid"
+          >
+            <span *ngIf="!loading">✅ Create Donation</span>
+            <span *ngIf="loading">Creating...</span>
+          </button>
+          <a routerLink="/donations" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,42 @@
+<div class="container">
+  <div class="auth-container role-selection">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2>Create an Account</h2>
+        <p class="subtitle">Choose how you want to use our platform</p>
+      </div>
+
+      <div class="role-cards">
+        <div class="role-card affected" (click)="navigateToAffected()">
+          <div class="role-icon" [innerHTML]="getIcon('emergency', 'xl') | safeHtml"></div>
+          <h3>I Need Help</h3>
+          <p>Register as an <strong>Affected Person</strong></p>
+          <ul class="role-features">
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Share your location</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Request relief goods</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Connect with donators</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Track donation deliveries</li>
+          </ul>
+          <button class="btn btn-affected">Register as Affected Person</button>
+        </div>
+
+        <div class="role-card donator" (click)="navigateToDonator()">
+          <div class="role-icon" [innerHTML]="getIcon('heart', 'xl') | safeHtml"></div>
+          <h3>I Want to Help</h3>
+          <p>Register as a <strong>Donator</strong></p>
+          <ul class="role-features">
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Find people in need</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Provide relief goods</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Track your donations</li>
+            <li><span [innerHTML]="getIcon('check', 'sm') | safeHtml"></span> Make a difference</li>
+          </ul>
+          <button class="btn btn-donator">Register as Donator</button>
+        </div>
+      </div>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a routerLink="/login">Login here</a></p>
+      </div>
+    </div>
+  </div>
+</div>

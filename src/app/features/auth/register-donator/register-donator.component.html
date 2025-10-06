@@ -1,0 +1,246 @@
+<div class="container">
+  <div class="auth-container">
+    <div class="card">
+      <div class="card-header">
+        <h2><span [innerHTML]="getIcon('heart') | safeHtml"></span> Register as Donator</h2>
+        <p class="subtitle">Help affected people by providing relief goods and assistance</p>
+      </div>
+
+      <div class="alert alert-error" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <!-- Personal Information -->
+        <div class="section-title">Personal Information</div>
+        
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label for="first_name">First Name <span class="required">*</span></label>
+            <input
+              type="text"
+              id="first_name"
+              class="form-control"
+              formControlName="first_name"
+              placeholder="Maria"
+            />
+            <div class="form-error" *ngIf="first_name?.invalid && first_name?.touched">
+              <span *ngIf="first_name?.errors?.['required']">First name is required</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="last_name">Last Name <span class="required">*</span></label>
+            <input
+              type="text"
+              id="last_name"
+              class="form-control"
+              formControlName="last_name"
+              placeholder="Santos"
+            />
+            <div class="form-error" *ngIf="last_name?.invalid && last_name?.touched">
+              <span *ngIf="last_name?.errors?.['required']">Last name is required</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input
+            type="email"
+            id="email"
+            class="form-control"
+            formControlName="email"
+            placeholder="maria.santos@example.com"
+          />
+          <div class="form-error" *ngIf="email?.invalid && email?.touched">
+            <span *ngIf="email?.errors?.['required']">Email is required</span>
+            <span *ngIf="email?.errors?.['email']">Please enter a valid email</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone_number">Contact Number (Philippines) <span class="required">*</span></label>
+          <input
+            type="tel"
+            id="phone_number"
+            class="form-control"
+            formControlName="phone_number"
+            placeholder="09XX XXX XXXX or +639XX XXX XXXX"
+          />
+          <div class="form-error" *ngIf="phone_number?.invalid && phone_number?.touched">
+            <span *ngIf="phone_number?.errors?.['required']">Phone number is required</span>
+            <span *ngIf="phone_number?.errors?.['pattern']">Please enter a valid PH mobile number</span>
+          </div>
+        </div>
+
+        <!-- Address Selection with Cascading Dropdowns (Optional) -->
+        <div class="section-title">Address (Optional)</div>
+        
+        <div class="form-group">
+          <label for="province">Province</label>
+          <select
+            id="province"
+            class="form-control"
+            formControlName="province"
+          >
+            <option value="">{{ loadingProvinces ? 'Loading provinces...' : 'Select Province' }}</option>
+            <option *ngFor="let province of provinces" [value]="province.code">
+              {{ province.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="city">City/Municipality</label>
+          <select
+            id="city"
+            class="form-control"
+            formControlName="city"
+            [disabled]="!province?.value || loadingCities"
+          >
+            <option value="">
+              {{ loadingCities ? 'Loading cities...' : (province?.value ? 'Select City/Municipality' : 'Select province first') }}
+            </option>
+            <option *ngFor="let city of cities" [value]="city.code">
+              {{ city.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="barangay">Barangay</label>
+          <select
+            id="barangay"
+            class="form-control"
+            formControlName="barangay"
+            [disabled]="!city?.value || loadingBarangays"
+          >
+            <option value="">
+              {{ loadingBarangays ? 'Loading barangays...' : (city?.value ? 'Select Barangay' : 'Select city first') }}
+            </option>
+            <option *ngFor="let barangay of barangays" [value]="barangay.code">
+              {{ barangay.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Organization Information -->
+        <div class="section-title">Organization Information (Optional)</div>
+        
+        <div class="form-group">
+          <label for="organization_type">I am donating as</label>
+          <select id="organization_type" class="form-control" formControlName="organization_type">
+            <option value="individual">Individual</option>
+            <option value="ngo">NGO / Non-Profit Organization</option>
+            <option value="business">Business / Corporation</option>
+            <option value="government">Government Agency</option>
+            <option value="religious">Religious Organization</option>
+            <option value="community">Community Group</option>
+          </select>
+        </div>
+
+        <div class="form-group" *ngIf="organization_type?.value !== 'individual'">
+          <label for="organization_name">Organization Name</label>
+          <input
+            type="text"
+            id="organization_name"
+            class="form-control"
+            formControlName="organization_name"
+            placeholder="Name of your organization"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="donation_capacity">Donation Capacity (Optional)</label>
+          <textarea
+            id="donation_capacity"
+            class="form-control"
+            formControlName="donation_capacity"
+            placeholder="e.g., Can provide 50 food packs per week, or 1000 bottles of water monthly"
+            rows="2"
+          ></textarea>
+          <small class="help-text">Helps us understand your donation capabilities</small>
+        </div>
+
+        <!-- Donation Preferences -->
+        <div class="section-title">Types of Donations You Can Provide</div>
+        
+        <div class="checkbox-grid" formGroupName="preferred_donation_types">
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="food" />
+            <span>🍱 Food Packs</span>
+          </label>
+          
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="water" />
+            <span><span [innerHTML]="getIcon('water') | safeHtml"></span> Water</span>
+          </label>
+          
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="medical" />
+            <span>💊 Medical Supplies</span>
+          </label>
+          
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="clothing" />
+            <span><span [innerHTML]="getIcon('clothing') | safeHtml"></span> Clothing</span>
+          </label>
+          
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="shelter" />
+            <span>⛺ Shelter Materials</span>
+          </label>
+          
+          <label class="checkbox-item">
+            <input type="checkbox" formControlName="cash" />
+            <span>💰 Cash Donation</span>
+          </label>
+        </div>
+
+        <!-- Account Security -->
+        <div class="section-title">Account Security</div>
+        
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <input
+            type="password"
+            id="password"
+            class="form-control"
+            formControlName="password"
+            placeholder="Enter password (min 8 characters)"
+          />
+          <div class="form-error" *ngIf="password?.invalid && password?.touched">
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">Password must be at least 8 characters</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password2">Confirm Password <span class="required">*</span></label>
+          <input
+            type="password"
+            id="password2"
+            class="form-control"
+            formControlName="password2"
+            placeholder="Confirm password"
+          />
+          <div class="form-error" *ngIf="password2?.invalid && password2?.touched">
+            <span *ngIf="password2?.errors?.['required']">Please confirm your password</span>
+            <span *ngIf="password2?.errors?.['passwordMismatch']">Passwords do not match</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="loading || registerForm.invalid">
+          <span *ngIf="!loading"><span [innerHTML]="getIcon('heart') | safeHtml"></span> Register & Start Helping</span>
+          <span *ngIf="loading">Registering...</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Already have an account? <a routerLink="/login">Login here</a></p>
+        <p>Need help yourself? <a routerLink="/register/affected">Register as Affected Person</a></p>
+      </div>
+    </div>
+  </div>
+</div>

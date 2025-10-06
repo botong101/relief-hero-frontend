@@ -1,0 +1,80 @@
+<div class="acknowledgements-container">
+  <header class="page-header">
+    <h1 class="page-title">🎉 Donation Acknowledgements</h1>
+    <p class="page-subtitle">Real-time updates of successful donations to affected communities</p>
+  </header>
+
+  <div class="content-wrapper">
+    <!-- Loading State -->
+    <div *ngIf="loading && recentDonations.length === 0" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading recent donations...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-container">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error }}</p>
+      <button class="btn btn-retry" (click)="loadRecentDonations()">Try Again</button>
+    </div>
+
+    <!-- Donations List -->
+    <div *ngIf="!loading && !error && recentDonations.length > 0" class="donations-feed">
+      <div class="feed-header">
+        <h2>Recent Successful Donations</h2>
+        <span class="live-indicator">🔴 LIVE</span>
+      </div>
+
+      <div class="donation-cards">
+        <div *ngFor="let donation of recentDonations" class="donation-card">
+          <div class="donation-header">
+            <div class="donator-info">
+              <div class="donator-avatar">{{ donation.donator_name.charAt(0) }}</div>
+              <div class="donator-details">
+                <h3>{{ donation.donator_name }}</h3>
+                <span class="donator-role">Donator</span>
+              </div>
+            </div>
+            <div class="donation-time">{{ getTimeAgo(donation.donated_at) }}</div>
+          </div>
+
+          <div class="donation-content">
+            <div class="success-message">
+              <span class="success-icon">✅</span>
+              <strong>Donation Completed!</strong>
+            </div>
+            
+            <div class="donation-details">
+              <p>
+                <strong>{{ donation.donator_name }}</strong> successfully provided assistance to 
+                <strong>{{ donation.affected_first_name }} {{ donation.affected_last_name }}</strong>
+              </p>
+              
+              <div class="supply-info">
+                <span class="supplies-label">Supplies provided:</span>
+                <span class="supplies-text">{{ getSupplyNeedsSummary(donation.supply_needs_fulfilled) }}</span>
+              </div>
+              
+              <div class="location-info">
+                <span class="location-icon">📍</span>
+                <span>Location: {{ donation.latitude | number:'1.4-4' }}, {{ donation.longitude | number:'1.4-4' }}</span>
+              </div>
+              
+              <div class="contact-info">
+                <span class="phone-icon">📞</span>
+                <span>Contact: {{ donation.affected_phone }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && recentDonations.length === 0" class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h2>No Recent Donations</h2>
+      <p>When donations are completed through QR scanning, they will appear here in real-time.</p>
+    </div>
+  </div>
+</div>

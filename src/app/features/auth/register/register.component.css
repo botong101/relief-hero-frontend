@@ -1,0 +1,164 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+.auth-container.role-selection .card {
+  max-width: 900px;
+}
+
+.card {
+  max-width: 600px;
+  width: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-top: 8px;
+  font-weight: normal;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin: 30px 0;
+}
+
+.role-card {
+  padding: 32px 24px;
+  border: 3px solid #e5e7eb;
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.role-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.role-card.affected {
+  border-color: #fecaca;
+}
+
+.role-card.affected:hover {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.role-card.donator {
+  border-color: #bfdbfe;
+}
+
+.role-card.donator:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.role-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.role-card h3 {
+  font-size: 1.5rem;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.role-card p {
+  color: #6b7280;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+.role-features {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.role-features li {
+  padding: 8px 0;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.role-card button {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-affected {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-affected:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+
+.btn-donator {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-donator:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.auth-footer a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .role-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .role-card {
+    padding: 24px 20px;
+  }
+  
+  .role-icon {
+    font-size: 3rem;
+  }
+}
