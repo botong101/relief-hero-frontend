@@ -1503,35 +1503,68 @@ svg[viewBox="0 0 24 24"]:not(.preserve-size) {
 
 /* Modal Responsive Design */
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: var(--space-2);
+    align-items: flex-start;
+    padding-top: var(--space-4);
+  }
+  
+  .modal,
   .modal-content {
     max-width: 95vw;
-    min-width: 300px;
-    margin: var(--space-4);
+    min-width: 280px;
+    margin: 0;
+    max-height: 95vh;
+    width: 100%;
+  }
+  
+  /* Fix for modal-lg on mobile */
+  .modal-lg {
+    max-width: 95vw;
+    min-width: 280px;
+    width: 100%;
   }
   
   .qr-modal .modal-content {
     max-width: 95vw;
-    min-width: 320px;
+    min-width: 280px;
   }
   
   .ontheway-modal .modal-content {
     max-width: 95vw;
-    min-width: 320px;
+    min-width: 280px;
+  }
+  
+  .modal-header {
+    padding: var(--space-4);
+    flex-wrap: wrap;
+  }
+  
+  .modal-body {
+    padding: var(--space-4);
+    max-height: calc(95vh - 140px);
+    overflow-y: auto;
+  }
+  
+  .modal-footer {
+    padding: var(--space-3) var(--space-4);
   }
   
   .qr-code-display {
-    padding: var(--space-4);
-    margin: var(--space-4) auto;
+    padding: var(--space-3);
+    margin: var(--space-3) auto;
   }
   
   .qr-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-2);
   }
   
   .modal-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-2);
   }
   
   .instruction-box li {
@@ -1541,6 +1574,118 @@ svg[viewBox="0 0 24 24"]:not(.preserve-size) {
   .modal-header h3 {
     font-size: var(--text-lg);
     padding-right: var(--space-8);
+  }
+  
+  .modal-title {
+    font-size: var(--text-lg);
+  }
+  
+  .modal-close {
+    padding: var(--space-1);
+    font-size: 1.25rem;
+  }
+  
+  /* Improve touch targets for mobile */
+  .close-button {
+    width: 44px;
+    height: 44px;
+    top: var(--space-2);
+    right: var(--space-2);
+  }
+}
+
+/* Additional mobile small screen optimizations */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: var(--space-1);
+    padding-top: var(--space-2);
+  }
+  
+  .modal,
+  .modal-content,
+  .modal-lg {
+    max-width: 98vw;
+    min-width: 250px;
+    width: 100%;
+  }
+  
+  .modal-header {
+    padding: var(--space-3);
+  }
+  
+  .modal-body {
+    padding: var(--space-3);
+    max-height: calc(98vh - 120px);
+  }
+  
+  .modal-footer {
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .modal-title {
+    font-size: var(--text-base);
+  }
+  
+  .close-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Location modal specific mobile styles */
+  .info-section {
+    margin-bottom: var(--space-4);
+  }
+  
+  .info-grid,
+  .supply-grid {
+    gap: var(--space-2);
+  }
+  
+  .info-item,
+  .supply-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+  
+  .info-content,
+  .supply-content {
+    width: 100%;
+  }
+  
+  .info-label,
+  .supply-label {
+    font-size: var(--text-xs);
+    margin-bottom: var(--space-1);
+  }
+  
+  .info-value,
+  .supply-value {
+    font-size: var(--text-sm);
+    word-break: break-word;
+  }
+  
+  .verification-photo .situation-image {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .donator-item {
+    padding: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  
+  .donator-info {
+    font-size: var(--text-sm);
+  }
+  
+  .tracking-card {
+    padding: var(--space-3);
+  }
+  
+  .tracking-detail {
+    font-size: var(--text-xs);
   }
 }
 
